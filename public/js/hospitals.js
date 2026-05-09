@@ -119,17 +119,36 @@
     emergency: '["emergency"="yes"]'
   };
 
+  const OVERPASS_MIRRORS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter'
+  ];
+
+  async function fetchOverpass(query) {
+    let lastErr;
+    for (const base of OVERPASS_MIRRORS) {
+      try {
+        const res = await fetch(base, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'data=' + encodeURIComponent(query)
+        });
+        if (!res.ok) throw new Error('http ' + res.status);
+        return await res.json();
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('All Overpass mirrors failed');
+  }
+
   async function loadPlaces(lat, lng) {
     setListLoading();
     layer.clearLayers();
-    const radius = 4000; // meters
+    const radius = 5000; // meters
     const filter = AMENITY[currentFilter] || AMENITY.hospital;
-    const query = `[out:json][timeout:20];(node${filter}(around:${radius},${lat},${lng});way${filter}(around:${radius},${lat},${lng});relation${filter}(around:${radius},${lat},${lng}););out center 30;`;
-    const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+    const query = `[out:json][timeout:25];(node${filter}(around:${radius},${lat},${lng});way${filter}(around:${radius},${lat},${lng});relation${filter}(around:${radius},${lat},${lng}););out center 40;`;
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('overpass');
-      const data = await res.json();
+      const data = await fetchOverpass(query);
       const places = (data.elements || []).map(el => ({
         id: el.id,
         name: (el.tags && (el.tags.name || el.tags['name:en'])) || `${cap(currentFilter)} (unnamed)`,
