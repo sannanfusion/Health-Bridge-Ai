@@ -44,9 +44,12 @@
     function matchSymptoms(text) {
       const db = window.SYMPTOM_DB;
       const found = [];
+      const t = ' ' + text.toLowerCase().replace(/[^a-z\s']/g, ' ').replace(/\s+/g, ' ') + ' ';
       Object.keys(db).forEach(key => {
-        const k = key.replace('_', ' ');
-        if (text.includes(k)) found.push({ key, ...db[key] });
+        const entry = db[key];
+        const aliases = entry.aliases || [key.replace(/_/g, ' ')];
+        const hit = aliases.some(a => t.includes(' ' + a.toLowerCase() + ' ') || t.includes(a.toLowerCase()));
+        if (hit) found.push({ key, ...entry });
       });
       return found;
     }

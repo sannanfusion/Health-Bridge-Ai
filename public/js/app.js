@@ -59,6 +59,23 @@
       sio.observe(el);
     });
 
+    /* ---------- "Start AI Assistant" / nav AI Assistant -> open chatbot ---------- */
+    function openChat() {
+      const win = document.getElementById('chatWindow');
+      const tgl = document.getElementById('chatToggle');
+      if (!win) return;
+      win.classList.add('open');
+      win.setAttribute('aria-hidden', 'false');
+      tgl?.classList.add('hidden');
+      const ci = document.getElementById('chatInput');
+      setTimeout(() => ci?.focus(), 200);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+    document.getElementById('startAssistantBtn')?.addEventListener('click', openChat);
+    document.querySelectorAll('a[href="#assistant"]').forEach(a => {
+      a.addEventListener('click', (e) => { e.preventDefault(); openChat(); });
+    });
+
     /* ---------- Contact form (front-end demo) ---------- */
     const form = document.getElementById('contactForm');
     form.addEventListener('submit', (e) => {

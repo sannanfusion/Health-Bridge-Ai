@@ -44,24 +44,54 @@
   }
 
   function useGeolocation(silent) {
-    if (!navigator.geolocation) { if (!silent) alert('Geolocation not supported on this device.'); return; }
     setListLoading();
+    if (!navigator.geolocation) {
+      ipFallback(silent);
+      return;
+    }
+    let done = false;
+    const timer = setTimeout(() => { if (!done) { done = true; ipFallback(silent); } }, 9000);
     navigator.geolocation.getCurrentPosition(
       pos => {
+        if (done) return; done = true; clearTimeout(timer);
         const { latitude, longitude } = pos.coords;
-        lastCenter = { lat: latitude, lng: longitude };
-        map.setView([latitude, longitude], 14);
-        if (userMarker) userMarker.remove();
-        userMarker = L.marker([latitude, longitude], { title: 'You are here' })
-          .addTo(map).bindPopup('You are here').openPopup();
-        loadPlaces(latitude, longitude);
+        applyCenter(latitude, longitude, 'You are here');
       },
       () => {
-        if (!silent) alert('Unable to get location. Please search a city instead.');
-        loadPlaces(lastCenter.lat, lastCenter.lng);
+        if (done) return; done = true; clearTimeout(timer);
+        ipFallback(silent);
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
     );
+  }
+
+  /* IP-based location fallback (works inside iframes / when geolocation blocked) */
+  async function ipFallback(silent) {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      if (!res.ok) throw new Error('ipapi');
+      const d = await res.json();
+      if (d && d.latitude && d.longitude) {
+        applyCenter(d.latitude, d.longitude, `Approximate: ${d.city || ''} ${d.country_name || ''}`.trim());
+        return;
+      }
+      throw new Error('no coords');
+    } catch (e) {
+      if (!silent) {
+        renderError('Could not detect your location. Please type a city in the search box (e.g. "Mumbai", "New York").');
+      } else {
+        loadPlaces(lastCenter.lat, lastCenter.lng);
+      }
+    }
+  }
+
+  function applyCenter(lat, lng, label) {
+    lastCenter = { lat, lng };
+    map.setView([lat, lng], 14);
+    if (userMarker) userMarker.remove();
+    userMarker = L.marker([lat, lng], { title: label })
+      .addTo(map).bindPopup(label).openPopup();
+    loadPlaces(lat, lng);
   }
 
   async function searchPlace() {
@@ -69,13 +99,13 @@
     if (!q) return;
     setListLoading();
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`, {
+        headers: { 'Accept': 'application/json' }
+      });
       const data = await res.json();
       if (!data.length) { renderError('Location not found. Try another query.'); return; }
       const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
-      lastCenter = { lat, lng };
-      map.setView([lat, lng], 13);
-      loadPlaces(lat, lng);
+      applyCenter(lat, lng, data[0].display_name?.split(',')[0] || 'Searched location');
     } catch (e) {
       renderError('Search failed. Please check your connection.');
     }
@@ -89,17 +119,36 @@
     emergency: '["emergency"="yes"]'
   };
 
+  const OVERPASS_MIRRORS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter'
+  ];
+
+  async function fetchOverpass(query) {
+    let lastErr;
+    for (const base of OVERPASS_MIRRORS) {
+      try {
+        const res = await fetch(base, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'data=' + encodeURIComponent(query)
+        });
+        if (!res.ok) throw new Error('http ' + res.status);
+        return await res.json();
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('All Overpass mirrors failed');
+  }
+
   async function loadPlaces(lat, lng) {
     setListLoading();
     layer.clearLayers();
-    const radius = 4000; // meters
+    const radius = 5000; // meters
     const filter = AMENITY[currentFilter] || AMENITY.hospital;
-    const query = `[out:json][timeout:20];(node${filter}(around:${radius},${lat},${lng});way${filter}(around:${radius},${lat},${lng});relation${filter}(around:${radius},${lat},${lng}););out center 30;`;
-    const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+    const query = `[out:json][timeout:25];(node${filter}(around:${radius},${lat},${lng});way${filter}(around:${radius},${lat},${lng});relation${filter}(around:${radius},${lat},${lng}););out center 40;`;
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('overpass');
-      const data = await res.json();
+      const data = await fetchOverpass(query);
       const places = (data.elements || []).map(el => ({
         id: el.id,
         name: (el.tags && (el.tags.name || el.tags['name:en'])) || `${cap(currentFilter)} (unnamed)`,
