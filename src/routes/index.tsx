@@ -1,26 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
+/**
+ * HealthBridge AI lives as a self-contained static site under /public.
+ * The TanStack route simply hands off to the static HTML so the live
+ * preview shows the real app, and the same files can be uploaded as a
+ * standalone HTML/CSS/JS project to GitHub.
+ */
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+function Index() {
+  useEffect(() => {
+    window.location.replace("/index.html");
+  }, []);
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>
+      <p>Loading HealthBridge AI…</p>
     </div>
   );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
 }
