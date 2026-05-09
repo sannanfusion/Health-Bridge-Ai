@@ -1,0 +1,530 @@
+<!--
+  ============================================================
+  HealthBridge AI - Smart Healthcare Assistance Platform
+  Aligned with UN SDG 3: Good Health & Well-being
+  ============================================================
+  File: index.html
+  Description: Main entry point. Contains all sections of the
+  single-page application: Hero, Features, Symptom Checker,
+  Hospitals Map, Medicines, Wellness, AI Assistant, Emergency,
+  Contact, Footer. JS modules are loaded as ES modules.
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="HealthBridge AI - find nearby hospitals, check symptoms, explore medicines, and get AI-powered wellness guidance. Aligned with UN SDG 3." />
+  <meta name="theme-color" content="#0ea5b7" />
+  <title>HealthBridge AI — Smart Healthcare Assistance</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Icon library (Lucide) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+
+  <!-- Leaflet (OpenStreetMap) - real map, no API key required -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+  <!-- ============== NAVIGATION ============== -->
+  <header id="navbar" class="navbar">
+    <div class="container nav-inner">
+      <a href="#home" class="brand">
+        <span class="brand-icon"><i data-lucide="heart-pulse"></i></span>
+        <span class="brand-text">HealthBridge<span class="brand-accent">AI</span></span>
+      </a>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#symptoms">Symptom Checker</a>
+        <a href="#hospitals">Hospitals</a>
+        <a href="#medicines">Medicines</a>
+        <a href="#wellness">Wellness</a>
+        <a href="#assistant">AI Assistant</a>
+        <a href="#emergency" class="nav-emergency">Emergency</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <i data-lucide="menu"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============== HERO ============== -->
+  <section id="home" class="hero">
+    <div class="hero-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+    <div class="container hero-grid">
+      <div class="hero-copy fade-in">
+        <span class="eyebrow"><i data-lucide="sparkles"></i> Aligned with UN SDG 3</span>
+        <h1>Smart Healthcare Assistance for Everyday Wellness</h1>
+        <p class="lead">
+          HealthBridge AI helps you find nearby care, understand your symptoms,
+          explore medicines, and build healthier daily routines — all in one
+          beautifully simple platform.
+        </p>
+        <div class="cta-row">
+          <a href="#hospitals" class="btn btn-primary"><i data-lucide="map-pin"></i> Find Nearby Hospitals</a>
+          <a href="#assistant" class="btn btn-ghost"><i data-lucide="bot"></i> Start AI Assistant</a>
+        </div>
+        <div class="hero-trust">
+          <div><strong>10k+</strong><span>Health Tips</span></div>
+          <div><strong>OSM</strong><span>Live Maps</span></div>
+          <div><strong>24/7</strong><span>AI Support</span></div>
+        </div>
+      </div>
+
+      <div class="hero-visual fade-in-delayed">
+        <div class="glass-card hero-card">
+          <div class="hc-head">
+            <span class="dot dot-g"></span><span class="dot dot-y"></span><span class="dot dot-r"></span>
+            <span class="hc-title">Vitals Overview</span>
+          </div>
+          <div class="hc-grid">
+            <div class="vital">
+              <i data-lucide="heart-pulse"></i>
+              <div><span>Heart Rate</span><strong>72 bpm</strong></div>
+            </div>
+            <div class="vital">
+              <i data-lucide="droplet"></i>
+              <div><span>Hydration</span><strong>78%</strong></div>
+            </div>
+            <div class="vital">
+              <i data-lucide="moon"></i>
+              <div><span>Sleep</span><strong>7h 20m</strong></div>
+            </div>
+            <div class="vital">
+              <i data-lucide="activity"></i>
+              <div><span>Steps</span><strong>8,420</strong></div>
+            </div>
+          </div>
+          <div class="hc-bar">
+            <span>Wellness Score</span>
+            <div class="progress"><div class="progress-fill" style="width:82%"></div></div>
+            <strong>82</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== STATS DASHBOARD ============== -->
+  <section class="stats">
+    <div class="container stat-grid">
+      <div class="stat-card">
+        <i data-lucide="hospital"></i>
+        <div><span class="counter" data-target="0" id="statHospitals">0</span><p>Nearby Hospitals</p></div>
+      </div>
+      <div class="stat-card">
+        <i data-lucide="droplets"></i>
+        <div><span class="counter" id="statWater">0</span><p>Glasses Today</p></div>
+      </div>
+      <div class="stat-card">
+        <i data-lucide="smile"></i>
+        <div><span class="counter" id="statMood">0</span><p>Mood Score</p></div>
+      </div>
+      <div class="stat-card">
+        <i data-lucide="trending-up"></i>
+        <div><span class="counter" id="statWellness">0</span><p>Wellness %</p></div>
+      </div>
+      <div class="stat-card">
+        <i data-lucide="phone-call"></i>
+        <div><span class="counter" data-target="12">0</span><p>Emergency Contacts</p></div>
+      </div>
+      <div class="stat-card">
+        <i data-lucide="lightbulb"></i>
+        <div><span class="counter" data-target="48">0</span><p>Active Health Tips</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FEATURES ============== -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Everything you need for everyday wellness</h2>
+        <p>Designed with care, built with modern technology — accessible to everyone.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon"><i data-lucide="map-pinned"></i></div>
+          <h3>Nearby Care</h3>
+          <p>Real-time hospitals, clinics & pharmacies on a live OpenStreetMap.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon"><i data-lucide="stethoscope"></i></div>
+          <h3>Symptom Checker</h3>
+          <p>AI-style guidance with severity hints and gentle next steps.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon"><i data-lucide="pill"></i></div>
+          <h3>Medicine Explorer</h3>
+          <p>Search real medicines via the public openFDA dataset.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon"><i data-lucide="leaf"></i></div>
+          <h3>Daily Wellness</h3>
+          <p>Track water, sleep, mood and habits — synced to your device.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon"><i data-lucide="bot"></i></div>
+          <h3>AI Assistant</h3>
+          <p>Conversational guidance for stress, sleep, hydration and more.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon"><i data-lucide="siren"></i></div>
+          <h3>Emergency Help</h3>
+          <p>One-tap access to ambulance numbers and first-aid essentials.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SYMPTOM CHECKER ============== -->
+  <section id="symptoms" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>AI Symptom Checker</h2>
+        <p>Describe what you're feeling and get supportive, structured guidance.</p>
+      </div>
+
+      <div class="symptom-wrap">
+        <div class="symptom-input glass-card">
+          <label for="symptomInput">Your symptoms</label>
+          <textarea id="symptomInput" rows="3" placeholder="e.g. fever, headache, sore throat"></textarea>
+          <div class="chip-row" id="symptomChips">
+            <button class="chip" data-s="fever">Fever</button>
+            <button class="chip" data-s="headache">Headache</button>
+            <button class="chip" data-s="cough">Cough</button>
+            <button class="chip" data-s="stress">Stress</button>
+            <button class="chip" data-s="anxiety">Anxiety</button>
+            <button class="chip" data-s="fatigue">Fatigue</button>
+            <button class="chip" data-s="sore throat">Sore Throat</button>
+            <button class="chip" data-s="nausea">Nausea</button>
+          </div>
+          <button id="analyzeBtn" class="btn btn-primary"><i data-lucide="sparkles"></i> Analyze Symptoms</button>
+          <p class="disclaimer"><i data-lucide="info"></i> This is not a medical diagnosis. Always consult a qualified professional.</p>
+        </div>
+
+        <div class="symptom-result" id="symptomResult">
+          <div class="empty-state">
+            <i data-lucide="clipboard-list"></i>
+            <p>Your AI guidance will appear here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== HOSPITALS MAP ============== -->
+  <section id="hospitals" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Nearby Hospitals & Clinics</h2>
+        <p>Live data from OpenStreetMap — no API key required.</p>
+      </div>
+
+      <div class="map-toolbar">
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input type="text" id="placeSearch" placeholder="Search a city or area (e.g. Mumbai)" />
+          <button class="btn btn-ghost btn-sm" id="searchBtn">Search</button>
+        </div>
+        <div class="filters">
+          <button class="filter active" data-filter="hospital"><i data-lucide="hospital"></i> Hospital</button>
+          <button class="filter" data-filter="clinic"><i data-lucide="cross"></i> Clinic</button>
+          <button class="filter" data-filter="pharmacy"><i data-lucide="pill"></i> Pharmacy</button>
+          <button class="filter" data-filter="emergency"><i data-lucide="siren"></i> Emergency</button>
+        </div>
+        <button id="locateBtn" class="btn btn-primary btn-sm"><i data-lucide="locate-fixed"></i> Use My Location</button>
+      </div>
+
+      <div class="map-grid">
+        <div id="map" class="map"></div>
+        <div class="places-list" id="placesList">
+          <div class="empty-state">
+            <i data-lucide="map"></i>
+            <p>Allow location or search a city to see nearby places.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MEDICINES ============== -->
+  <section id="medicines" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>Medicine Information Center</h2>
+        <p>Powered by the public <strong>openFDA</strong> drug label dataset.</p>
+      </div>
+
+      <div class="med-toolbar">
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input type="text" id="medSearch" placeholder="Search a medicine (e.g. ibuprofen, paracetamol)" />
+          <button class="btn btn-primary btn-sm" id="medSearchBtn">Search</button>
+        </div>
+        <div class="filters" id="medFilters">
+          <button class="filter active" data-cat="all">All</button>
+          <button class="filter" data-cat="pain">Pain</button>
+          <button class="filter" data-cat="fever">Fever</button>
+          <button class="filter" data-cat="allergy">Allergy</button>
+          <button class="filter" data-cat="cough">Cough</button>
+        </div>
+      </div>
+
+      <div class="med-grid" id="medGrid">
+        <div class="empty-state full">
+          <i data-lucide="pill"></i>
+          <p>Search for a medicine to see real label information.</p>
+        </div>
+      </div>
+
+      <p class="disclaimer center"><i data-lucide="info"></i> Always consult a healthcare professional before taking any medication.</p>
+    </div>
+  </section>
+
+  <!-- ============== WELLNESS ============== -->
+  <section id="wellness" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Daily Wellness Tracker</h2>
+        <p>Small daily habits create lasting change. Your progress is saved on this device.</p>
+      </div>
+
+      <div class="wellness-grid">
+        <!-- Water -->
+        <div class="wellness-card">
+          <div class="ring" id="waterRing">
+            <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="ring-bg"/><circle cx="60" cy="60" r="52" class="ring-fg" id="waterRingFg"/></svg>
+            <div class="ring-center"><strong id="waterCount">0</strong><span>/ 8 glasses</span></div>
+          </div>
+          <h3>Water Intake</h3>
+          <div class="row">
+            <button class="btn btn-ghost btn-sm" id="waterMinus">−</button>
+            <button class="btn btn-primary btn-sm" id="waterPlus"><i data-lucide="droplet"></i> Add Glass</button>
+          </div>
+        </div>
+
+        <!-- Sleep -->
+        <div class="wellness-card">
+          <div class="ring">
+            <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="ring-bg"/><circle cx="60" cy="60" r="52" class="ring-fg" id="sleepRingFg"/></svg>
+            <div class="ring-center"><strong id="sleepHours">7</strong><span>hours</span></div>
+          </div>
+          <h3>Sleep</h3>
+          <input type="range" min="0" max="12" value="7" id="sleepRange" />
+        </div>
+
+        <!-- Mood -->
+        <div class="wellness-card">
+          <h3>How do you feel today?</h3>
+          <div class="mood-row" id="moodRow">
+            <button data-m="1">😢</button>
+            <button data-m="2">😕</button>
+            <button data-m="3">😐</button>
+            <button data-m="4">🙂</button>
+            <button data-m="5">😄</button>
+          </div>
+          <p class="muted" id="moodLabel">Tap to log your mood</p>
+        </div>
+
+        <!-- Exercise -->
+        <div class="wellness-card">
+          <h3>Today's Movement</h3>
+          <ul class="check-list" id="habitList">
+            <li><label><input type="checkbox" data-h="walk"/> 30 min walk</label></li>
+            <li><label><input type="checkbox" data-h="stretch"/> 10 min stretching</label></li>
+            <li><label><input type="checkbox" data-h="meditate"/> 5 min meditation</label></li>
+            <li><label><input type="checkbox" data-h="fruit"/> Eat fruit / veggies</label></li>
+            <li><label><input type="checkbox" data-h="screen"/> Screen-free hour</label></li>
+          </ul>
+          <div class="streak"><i data-lucide="flame"></i> Streak: <strong id="streakCount">0</strong> days</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== EMERGENCY ============== -->
+  <section id="emergency" class="section emergency">
+    <div class="container">
+      <div class="section-head light">
+        <h2><i data-lucide="siren"></i> Emergency Help</h2>
+        <p>Fast access to emergency services and life-saving guidance.</p>
+      </div>
+
+      <div class="emerg-toolbar">
+        <label for="countrySelect">Country:</label>
+        <select id="countrySelect">
+          <option value="IN">India</option>
+          <option value="US">United States</option>
+          <option value="UK">United Kingdom</option>
+          <option value="EU">Europe</option>
+          <option value="AU">Australia</option>
+          <option value="CA">Canada</option>
+        </select>
+      </div>
+
+      <div class="emerg-grid" id="emergGrid"><!-- populated by JS --></div>
+
+      <div class="firstaid-grid">
+        <div class="firstaid">
+          <h3><i data-lucide="heart-pulse"></i> CPR (Adult)</h3>
+          <ol>
+            <li>Check responsiveness & call emergency services.</li>
+            <li>Place hands at center of chest. Push hard, ~2 inches deep.</li>
+            <li>Compress at 100–120 per minute (to the beat of "Stayin' Alive").</li>
+            <li>Continue until help arrives or person breathes.</li>
+          </ol>
+        </div>
+        <div class="firstaid">
+          <h3><i data-lucide="bandage"></i> Bleeding</h3>
+          <ol>
+            <li>Apply firm pressure with clean cloth.</li>
+            <li>Elevate the wound above heart level if possible.</li>
+            <li>Do not remove embedded objects.</li>
+            <li>Seek medical help for deep wounds.</li>
+          </ol>
+        </div>
+        <div class="firstaid">
+          <h3><i data-lucide="flame"></i> Burns</h3>
+          <ol>
+            <li>Cool burn under running water for 20 minutes.</li>
+            <li>Remove tight clothing or jewelry near area.</li>
+            <li>Cover loosely with sterile non-stick dressing.</li>
+            <li>Do not apply ice, butter, or toothpaste.</li>
+          </ol>
+        </div>
+        <div class="firstaid">
+          <h3><i data-lucide="droplet"></i> Blood Donation</h3>
+          <p>Healthy adults can donate every 56 days. Stay hydrated, eat iron-rich foods, and bring valid ID.</p>
+          <a href="https://www.who.int/campaigns/world-blood-donor-day" target="_blank" rel="noopener" class="link">Learn more (WHO)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== CONTACT ============== -->
+  <section id="contact" class="section">
+    <div class="container contact-grid">
+      <div>
+        <div class="section-head left">
+          <h2>Get in touch</h2>
+          <p>Questions, feedback, or partnership ideas? We'd love to hear from you.</p>
+        </div>
+        <ul class="contact-list">
+          <li><i data-lucide="mail"></i> support@healthbridge.ai</li>
+          <li><i data-lucide="phone"></i> +1 (555) 010-2030</li>
+          <li><i data-lucide="map-pin"></i> Remote-first · Worldwide</li>
+        </ul>
+        <div class="faq">
+          <h3>FAQ</h3>
+          <details><summary>Is HealthBridge AI a medical service?</summary><p>No. We provide informational guidance only. Always consult a licensed professional.</p></details>
+          <details><summary>Does it work offline?</summary><p>Most trackers work offline; maps & medicine search require internet.</p></details>
+          <details><summary>Is my data private?</summary><p>Yes — wellness data is stored locally on your device using localStorage.</p></details>
+        </div>
+      </div>
+
+      <form class="glass-card contact-form" id="contactForm">
+        <label>Name<input type="text" required name="name" /></label>
+        <label>Email<input type="email" required name="email" /></label>
+        <label>Message<textarea rows="5" required name="message"></textarea></label>
+        <button type="submit" class="btn btn-primary"><i data-lucide="send"></i> Send Message</button>
+        <p class="form-status" id="formStatus"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="#home" class="brand">
+          <span class="brand-icon"><i data-lucide="heart-pulse"></i></span>
+          <span class="brand-text">HealthBridge<span class="brand-accent">AI</span></span>
+        </a>
+        <p class="muted">Smart healthcare assistance for everyday wellness. Aligned with UN SDG 3 — Good Health & Well-being.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#hospitals">Hospitals</a></li>
+          <li><a href="#medicines">Medicines</a></li>
+          <li><a href="#wellness">Wellness</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="https://www.who.int/" target="_blank" rel="noopener">WHO</a></li>
+          <li><a href="https://open.fda.gov/apis/drug/" target="_blank" rel="noopener">openFDA</a></li>
+          <li><a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a></li>
+          <li><a href="https://sdgs.un.org/goals/goal3" target="_blank" rel="noopener">UN SDG 3</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Connect</h4>
+        <div class="socials">
+          <a href="#" aria-label="Twitter"><i data-lucide="twitter"></i></a>
+          <a href="#" aria-label="GitHub"><i data-lucide="github"></i></a>
+          <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>
+          <a href="#" aria-label="Instagram"><i data-lucide="instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span id="yr"></span> HealthBridge AI · For educational use only · Not a substitute for medical advice.</p>
+    </div>
+  </footer>
+
+  <!-- ============== AI CHATBOT ============== -->
+  <button id="chatToggle" class="chat-toggle" aria-label="Open AI assistant">
+    <i data-lucide="message-circle"></i>
+  </button>
+
+  <div id="chatWindow" class="chat-window" aria-hidden="true">
+    <header class="chat-header">
+      <div>
+        <strong>HealthBridge Assistant</strong>
+        <span class="chat-status"><span class="dot-online"></span> Online</span>
+      </div>
+      <button id="chatClose" aria-label="Close"><i data-lucide="x"></i></button>
+    </header>
+    <div class="chat-body" id="chatBody"></div>
+    <form class="chat-form" id="chatForm">
+      <input id="chatInput" type="text" placeholder="Ask about stress, sleep, hydration…" autocomplete="off" />
+      <button type="submit" aria-label="Send"><i data-lucide="send"></i></button>
+    </form>
+    <p class="chat-disc">Informational only — not medical advice.</p>
+  </div>
+
+  <!-- ============== SCRIPTS ============== -->
+  <script src="js/data.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/symptoms.js" defer></script>
+  <script src="js/hospitals.js" defer></script>
+  <script src="js/medicines.js" defer></script>
+  <script src="js/wellness.js" defer></script>
+  <script src="js/emergency.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+</body>
+</html>
