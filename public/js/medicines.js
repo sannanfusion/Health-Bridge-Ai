@@ -39,14 +39,31 @@
       const q = input.value.trim();
       if (!q) return;
       grid.innerHTML = Array.from({ length: 4 }).map(() => '<div class="skeleton" style="height:160px"></div>').join('');
+
+      const enc = encodeURIComponent(q);
+      // Try progressively broader queries so user input like "advil",
+      // "tylenol", "cough" or "allergy" all return real results.
+      const queries = [
+        `openfda.brand_name:"${enc}"+OR+openfda.generic_name:"${enc}"`,
+        `openfda.substance_name:"${enc}"`,
+        `openfda.brand_name:${enc}*+OR+openfda.generic_name:${enc}*`,
+        `purpose:"${enc}"+OR+indications_and_usage:"${enc}"`
+      ];
+
       try {
-        const url = `${FDA}?search=openfda.generic_name:"${encodeURIComponent(q)}"+OR+openfda.brand_name:"${encodeURIComponent(q)}"&limit=8`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('not found');
-        const data = await res.json();
-        renderResults(data.results || []);
+        let results = [];
+        for (const qStr of queries) {
+          try {
+            const res = await fetch(`${FDA}?search=${qStr}&limit=8`);
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (data.results && data.results.length) { results = data.results; break; }
+          } catch (_) { /* try next */ }
+        }
+        if (!results.length) throw new Error('not found');
+        renderResults(results);
       } catch (e) {
-        grid.innerHTML = `<div class="empty-state full"><i data-lucide="pill-off"></i><p>No results found for "<strong>${escapeHtml(q)}</strong>". Try another spelling.</p></div>`;
+        grid.innerHTML = `<div class="empty-state full"><i data-lucide="pill-off"></i><p>No results found for "<strong>${escapeHtml(q)}</strong>". Try another spelling or a generic name (e.g. ibuprofen, acetaminophen, loratadine).</p></div>`;
         window.HBA_refreshIcons();
       }
     }

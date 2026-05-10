@@ -8,6 +8,7 @@
   .stat-grid { grid-template-columns: repeat(3, 1fr); }
   .map-grid { grid-template-columns: 1fr; }
   .map { height: 380px; }
+  .places-list { max-height: none; }
   .wellness-grid { grid-template-columns: repeat(2, 1fr); }
   .contact-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
@@ -35,8 +36,15 @@
   .wellness-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; gap: 1.6rem; }
 
-  .map-toolbar { flex-direction: column; align-items: stretch; }
-  .filters { justify-content: center; }
+  .map-toolbar { flex-direction: column; align-items: stretch; gap: .6rem; }
+  .map-toolbar .search-box { width: 100%; }
+  .map-toolbar .search-box input { min-width: 0; flex: 1; }
+  .filters { justify-content: center; flex-wrap: wrap; }
+  .map { height: 320px; }
+  .map-grid { gap: 1rem; }
+
+  .med-toolbar { flex-direction: column; align-items: stretch; gap: .6rem; }
+  .med-grid { grid-template-columns: 1fr; }
 
   .chat-window { right: .75rem; left: .75rem; bottom: 5.2rem; width: auto; height: 70vh; }
   .chat-toggle { right: 1rem; bottom: 1rem; width: 54px; height: 54px; }

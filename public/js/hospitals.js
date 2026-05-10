@@ -27,7 +27,11 @@
     }).addTo(map);
     layer = L.layerGroup().addTo(map);
 
-    document.getElementById('locateBtn').addEventListener('click', useGeolocation);
+    // Make sure tiles render correctly inside flex/grid containers and iframes
+    setTimeout(() => map.invalidateSize(), 200);
+    window.addEventListener('resize', () => map.invalidateSize());
+
+    document.getElementById('locateBtn').addEventListener('click', () => useGeolocation(false));
     document.getElementById('searchBtn').addEventListener('click', searchPlace);
     document.getElementById('placeSearch').addEventListener('keydown', e => { if (e.key === 'Enter') searchPlace(); });
     document.querySelectorAll('.map-toolbar .filter').forEach(b => {
@@ -45,44 +49,60 @@
 
   function useGeolocation(silent) {
     setListLoading();
-    if (!navigator.geolocation) {
-      ipFallback(silent);
+    const btn = document.getElementById('locateBtn');
+    const originalLabel = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader"></i> Locating…';
+      window.HBA_refreshIcons();
+    }
+    const restore = () => {
+      if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; window.HBA_refreshIcons(); }
+    };
+
+    // Inside cross-origin iframes (preview / embed) the geolocation prompt is
+    // often silently blocked, so fall straight back to IP-based lookup.
+    const inIframe = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+    if (!navigator.geolocation || inIframe) {
+      ipFallback(silent).finally(restore);
       return;
     }
+
     let done = false;
-    const timer = setTimeout(() => { if (!done) { done = true; ipFallback(silent); } }, 9000);
+    const timer = setTimeout(() => {
+      if (done) return; done = true;
+      ipFallback(silent).finally(restore);
+    }, 6000);
+
     navigator.geolocation.getCurrentPosition(
       pos => {
         if (done) return; done = true; clearTimeout(timer);
-        const { latitude, longitude } = pos.coords;
-        applyCenter(latitude, longitude, 'You are here');
+        applyCenter(pos.coords.latitude, pos.coords.longitude, 'You are here');
+        restore();
       },
       () => {
         if (done) return; done = true; clearTimeout(timer);
-        ipFallback(silent);
+        ipFallback(silent).finally(restore);
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 5500, maximumAge: 60000 }
     );
   }
 
-  /* IP-based location fallback (works inside iframes / when geolocation blocked) */
+  /* IP-based location fallback (multi-provider, works inside iframes) */
   async function ipFallback(silent) {
-    try {
-      const res = await fetch('https://ipapi.co/json/');
-      if (!res.ok) throw new Error('ipapi');
-      const d = await res.json();
-      if (d && d.latitude && d.longitude) {
-        applyCenter(d.latitude, d.longitude, `Approximate: ${d.city || ''} ${d.country_name || ''}`.trim());
-        return;
-      }
-      throw new Error('no coords');
-    } catch (e) {
-      if (!silent) {
-        renderError('Could not detect your location. Please type a city in the search box (e.g. "Mumbai", "New York").');
-      } else {
-        loadPlaces(lastCenter.lat, lastCenter.lng);
-      }
+    const providers = [
+      async () => { const r = await fetch('https://ipwho.is/'); const d = await r.json(); if (!d.success) throw 0; return { lat: d.latitude, lng: d.longitude, label: `${d.city || ''} ${d.country || ''}`.trim() }; },
+      async () => { const r = await fetch('https://ipapi.co/json/'); if (!r.ok) throw 0; const d = await r.json(); return { lat: d.latitude, lng: d.longitude, label: `${d.city || ''} ${d.country_name || ''}`.trim() }; },
+      async () => { const r = await fetch('https://get.geojs.io/v1/ip/geo.json'); if (!r.ok) throw 0; const d = await r.json(); return { lat: parseFloat(d.latitude), lng: parseFloat(d.longitude), label: `${d.city || ''} ${d.country || ''}`.trim() }; }
+    ];
+    for (const p of providers) {
+      try {
+        const { lat, lng, label } = await p();
+        if (lat && lng) { applyCenter(lat, lng, 'Approximate: ' + (label || 'your area')); return; }
+      } catch (_) { /* try next */ }
     }
+    if (!silent) renderError('Could not detect your location. Please type a city in the search box (e.g. "Mumbai", "New York").');
+    else loadPlaces(lastCenter.lat, lastCenter.lng);
   }
 
   function applyCenter(lat, lng, label) {
