@@ -103,7 +103,52 @@
           replies.push(`I'm sorry you're dealing with ${s.key.replace(/_/g, ' ')}. ${tip} You can open the Symptom Checker section above for full guidance.`);
         }
 
-        // 3) Default if nothing matched — echo back so it feels like the bot read it
+        // 3) Body-part / generic "pain in X" handler
+        if (!replies.length) {
+          const BODY = {
+            eye: ['eye','eyes','vision','sight'],
+            leg: ['leg','legs','calf','thigh','knee','knees','ankle','foot','feet','shin'],
+            arm: ['arm','arms','elbow','wrist','shoulder','shoulders'],
+            back: ['back','spine','lower back','upper back'],
+            neck: ['neck'],
+            stomach: ['stomach','belly','abdomen','tummy','gut'],
+            chest: ['chest','heart'],
+            head: ['head','forehead','temple','temples'],
+            ear: ['ear','ears'],
+            tooth: ['tooth','teeth','gum','gums','jaw'],
+            throat: ['throat'],
+            skin: ['skin','rash','itch','itching']
+          };
+          const PAIN = ['pain','ache','hurt','hurts','hurting','sore','soreness','burning','stiff','stiffness','swelling','swollen','cramp','cramps'];
+          const hasPain = PAIN.some(w => tokens.has(w));
+          let part = null;
+          for (const [name, words] of Object.entries(BODY)) {
+            if (words.some(w => t.includes(' ' + w + ' '))) { part = name; break; }
+          }
+          if (hasPain && part) {
+            const tips = {
+              eye: "Rest your eyes (20-20-20 rule: every 20 min look 20 ft away for 20 sec). Reduce screen brightness, blink often, and use lubricating drops if dry. See an eye doctor if pain is severe, sudden, or with vision changes.",
+              leg: "Rest the leg, elevate it, and apply a cold pack for 15 min. Gentle stretching and hydration help muscle cramps. Seek care if there's swelling, redness, warmth, or the pain followed an injury.",
+              arm: "Rest the arm and avoid the activity that triggered it. Ice for 15 min, then gentle range-of-motion stretches. See a doctor if pain is severe, with numbness, or after a fall.",
+              back: "Avoid prolonged sitting, try gentle stretching (cat-cow, knee-to-chest), and apply a warm compress. See a doctor if pain radiates down a leg or comes with numbness.",
+              neck: "Relax your shoulders, do slow neck rolls, and check your screen height (top of monitor at eye level). A warm compress and 5-min stretch breaks help a lot.",
+              stomach: "Sip warm water or ginger tea, eat small bland meals, and avoid spicy/fatty food for a few hours. See a doctor if pain is severe, persistent over 24h, or with fever or blood.",
+              chest: "⚠ Chest pain can be serious. Stop activity and sit down. If pain spreads to arm/jaw, comes with shortness of breath, sweating, or nausea — call emergency services immediately.",
+              head: "Drink water, rest in a dim quiet room, and try a cool compress on your forehead. Limit screens. Seek urgent care for sudden, severe, or 'worst-ever' headaches.",
+              ear: "Avoid inserting anything into the ear. A warm compress can ease discomfort. See a doctor if pain is severe, with fever, drainage, or hearing loss.",
+              tooth: "Rinse with warm salt water, floss gently to dislodge debris, and avoid very hot/cold foods. See a dentist soon — tooth pain rarely resolves on its own.",
+              throat: "Gargle warm salt water, sip warm fluids with honey, and rest your voice. See a doctor if pain is severe, with high fever, or lasts more than a few days.",
+              skin: "Keep the area clean and dry, avoid scratching, and try a fragrance-free moisturizer or cold compress. See a doctor if it spreads, blisters, or comes with fever."
+            };
+            replies.push(`Sorry to hear about your ${part} pain. ${tips[part]}`);
+          } else if (hasPain) {
+            replies.push("Sorry you're in pain. General relief: rest the area, apply a cold pack for 15 min (or warm compress for muscle stiffness), stay hydrated, and avoid activity that worsens it. If pain is severe, sudden, or doesn't improve in 24–48h, please see a doctor. Could you tell me where it hurts?");
+          } else if (part) {
+            replies.push(`I can share general guidance about your ${part}. Could you describe what's happening — pain, swelling, itching, numbness, or something else?`);
+          }
+        }
+
+        // 4) Final default — echo back so it feels like the bot read it
         if (!replies.length) {
           const snippet = text.length > 60 ? text.slice(0, 60) + '…' : text;
           replies.push(`You said: "${snippet}". ${window.CHAT_DEFAULT}`);
