@@ -45,10 +45,22 @@
       const db = window.SYMPTOM_DB;
       const found = [];
       const t = ' ' + text.toLowerCase().replace(/[^a-z\s']/g, ' ').replace(/\s+/g, ' ') + ' ';
+      const tokens = new Set(t.trim().split(' ').filter(Boolean));
+      // Stop-words we should NOT match a symptom on
+      const STOP = new Set(['i','im','am','a','an','the','my','have','has','had','feel','feeling','very','really','some','of','and','or','to','it','is','was','with','in','on','for','me','today','since','from','at','this','that','bit','little']);
+
       Object.keys(db).forEach(key => {
         const entry = db[key];
         const aliases = entry.aliases || [key.replace(/_/g, ' ')];
-        const hit = aliases.some(a => t.includes(' ' + a.toLowerCase() + ' ') || t.includes(a.toLowerCase()));
+        // 1) phrase match (handles multi-word aliases like "head pain")
+        let hit = aliases.some(a => t.includes(' ' + a.toLowerCase() + ' '));
+        // 2) token match (handles single words anywhere in the input)
+        if (!hit) {
+          hit = aliases.some(a => {
+            const aw = a.toLowerCase().split(' ').filter(w => w && !STOP.has(w));
+            return aw.length > 0 && aw.every(w => tokens.has(w));
+          });
+        }
         if (hit) found.push({ key, ...entry });
       });
       return found;
