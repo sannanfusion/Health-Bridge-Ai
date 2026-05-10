@@ -23,7 +23,8 @@
     function add(role, text) {
       const div = document.createElement('div');
       div.className = `bubble ${role}`;
-      div.innerHTML = `${escapeHtml(text)}<span class="time">${time()}</span>`;
+      const safe = escapeHtml(text).replace(/\n/g, '<br>');
+      div.innerHTML = `${safe}<span class="time">${time()}</span>`;
       body.appendChild(div);
       body.scrollTop = body.scrollHeight;
     }
