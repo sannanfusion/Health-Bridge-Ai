@@ -27,7 +27,11 @@
     }).addTo(map);
     layer = L.layerGroup().addTo(map);
 
-    document.getElementById('locateBtn').addEventListener('click', useGeolocation);
+    // Make sure tiles render correctly inside flex/grid containers and iframes
+    setTimeout(() => map.invalidateSize(), 200);
+    window.addEventListener('resize', () => map.invalidateSize());
+
+    document.getElementById('locateBtn').addEventListener('click', () => useGeolocation(false));
     document.getElementById('searchBtn').addEventListener('click', searchPlace);
     document.getElementById('placeSearch').addEventListener('keydown', e => { if (e.key === 'Enter') searchPlace(); });
     document.querySelectorAll('.map-toolbar .filter').forEach(b => {
