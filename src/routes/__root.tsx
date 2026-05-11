@@ -72,14 +72,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "HealthBridge AI — Your Intelligent Health Companion" },
+      { name: "description", content: "HealthBridge AI connects you to hospitals, symptom checkers, emergency assistance, and wellness tracking — powered by modern AI technology." },
+      { name: "author", content: "HealthBridge AI" },
+      { property: "og:title", content: "HealthBridge AI" },
+      { property: "og:description", content: "Your intelligent health companion. Find hospitals, check symptoms, and track wellness with AI." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@HealthBridgeAI" },
     ],
     links: [
       {
