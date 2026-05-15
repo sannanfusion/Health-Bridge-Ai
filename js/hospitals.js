@@ -248,26 +248,27 @@
     `;
 
     try {
-      const overpassUrl = 'https://overpass-api.de/api/interpreter';
+      const mirrors = [
+        'https://overpass-api.de/api/interpreter',
+        'https://overpass.osm.ch/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+      ];
 
-      const response = await fetch(overpassUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'data=' + encodeURIComponent(query)
-      });
+      let data = null;
+      let error = null;
 
-      if (!response.ok) {
-        throw new Error(`Overpass API error: ${response.status}`);
+      for (const url of mirrors) {
+        try {
+          const res = await fetch(url + '?data=' + encodeURIComponent(query));
+          if (!res.ok) continue;
+          data = await res.json();
+          if (data) break;
+        } catch (e) {
+          error = e;
+        }
       }
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Invalid response format: expected JSON");
-      }
-
-      const data = await response.json();
+      if (!data) throw error || new Error('No data from any mirror');
 
       const places = (data.elements || []).map(el => {
 
