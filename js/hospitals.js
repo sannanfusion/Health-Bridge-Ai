@@ -176,7 +176,7 @@
     try {
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`
+        `/api/hospitals?query=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
