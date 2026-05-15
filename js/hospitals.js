@@ -179,6 +179,10 @@
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`
       );
 
+      if (!response.ok) {
+        throw new Error(`Location search error: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (!data.length) {
@@ -244,23 +248,24 @@
     `;
 
     try {
+      const overpassUrl = 'https://overpass-api.de/api/interpreter';
 
-      // IMPORTANT FIX:
-      // using allorigins proxy to bypass CORS
-
-      const overpassUrl =
-        'https://overpass-api.de/api/interpreter';
-
-      const proxyUrl =
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(overpassUrl)}`;
-
-      const response = await fetch(proxyUrl, {
+      const response = await fetch(overpassUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: 'data=' + encodeURIComponent(query)
       });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Invalid response format: expected JSON");
+      }
 
       const data = await response.json();
 
